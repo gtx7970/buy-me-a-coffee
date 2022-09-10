@@ -1,34 +1,40 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: ISC
 pragma solidity ^0.8.9;
 
-// Uncomment this line to use console.log
-// import "hardhat/console.sol";
+contract BuyMeACoffee {
+    struct memo {
+        string name;
+        string message;
+        address from;
+        uint256 timestamp;
+    }
 
-contract Lock {
-    uint public unlockTime;
-    address payable public owner;
+    event newMemo(string name, string message, address from, uint256 timestamp);
 
-    event Withdrawal(uint amount, uint when);
+    memo[] memos;
 
-    constructor(uint _unlockTime) payable {
-        require(
-            block.timestamp < _unlockTime,
-            "Unlock time should be in the future"
-        );
+    address payable owner;
 
-        unlockTime = _unlockTime;
+    constructor() {
         owner = payable(msg.sender);
     }
 
-    function withdraw() public {
-        // Uncomment this line, and the import of "hardhat/console.sol", to print a log in your terminal
-        // console.log("Unlock time is %o and block timestamp is %o", unlockTime, block.timestamp);
+    function getMemos() public view returns (memo[] memory) {
+        return memos;
+    }
 
-        require(block.timestamp >= unlockTime, "You can't withdraw yet");
-        require(msg.sender == owner, "You aren't the owner");
+    function buyCoffee(string memory name, string memory message)
+        public
+        payable
+    {
+        require(msg.value > 0, "must greatter than 0");
+        memos.push(memo(name, message, msg.sender, block.timestamp));
 
-        emit Withdrawal(address(this).balance, block.timestamp);
+        // emit
+        emit newMemo(name, message, msg.sender, block.timestamp);
+    }
 
-        owner.transfer(address(this).balance);
+    function withdrawTips() public {
+        require(owner.send(address(this).balance));
     }
 }
